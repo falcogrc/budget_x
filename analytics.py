@@ -4,7 +4,10 @@ from storage import load, save
 
 
 def _bar(value, max_val, width=30):
-    filled = int((value / max_val) * width) if max_val > 0 else 0
+    if max_val <= 0:
+        return '░' * width
+    ratio = min(value / max_val, 1.0)
+    filled = int(ratio * width)
     return '█' * filled + '░' * (width - filled)
 
 
@@ -119,7 +122,7 @@ def _category_chart(txns, title, color):
     max_cat = max(cat_totals.values())
     for cat, amount in sorted(cat_totals.items(), key=lambda x: -x[1]):
         bar = _bar(amount, max_cat)
-        print(f'  {cat:<20} {color}{amount:>8.2f}{RESET} {bar}')
+        print(f'  {cat:<20} {color}{amount:>12,.2f}{RESET} {bar}')
     print()
 
 
@@ -151,10 +154,10 @@ def _show_monthly_chart(txns):
         exp = months_expense.get(m, 0)
         sav = months_savings.get(m, 0)
         print(f'  {m}')
-        print(f'    {GREEN}█{RESET} {"доход":<7} {inc:>8.2f} {_bar(inc, max_val)}')
-        print(f'    {RED}█{RESET} {"расход":<7} {exp:>8.2f} {_bar(exp, max_val)}')
+        print(f'    {GREEN}█{RESET} {"доход":<7} {inc:>12,.2f} {_bar(inc, max_val)}')
+        print(f'    {RED}█{RESET} {"расход":<7} {exp:>12,.2f} {_bar(exp, max_val)}')
         if sav > 0:
-            print(f'    {CYAN}█{RESET} {"сбереж":<7} {sav:>8.2f} {_bar(sav, max_val)}')
+            print(f'    {CYAN}█{RESET} {"сбереж":<7} {sav:>12,.2f} {_bar(sav, max_val)}')
     print()
 
 
@@ -178,7 +181,7 @@ def _show_balance_trend(txns):
         cumulative += monthly[m]
         color = GREEN if cumulative >= 0 else RED
         bar = _bar(abs(cumulative), max_abs)
-        print(f'  {m} {color}{cumulative:>10.2f}{RESET} {bar}')
+        print(f'  {m} {color}{cumulative:>12,.2f}{RESET} {bar}')
     print()
 
 
@@ -199,7 +202,7 @@ def _show_budget_progress(data, expenses):
         bar = _bar(fact, limit, width=20)
         color = GREEN if pct <= 100 else RED
         flag = ' ✅' if pct <= 100 else ''
-        print(f'  {cat:<20} {color}{fact:>8.2f} / {limit:>8.2f} {bar} {pct:.0f}%{flag}{RESET}')
+        print(f'  {cat:<20} {color}{fact:>12,.2f} / {limit:>12,.2f} {bar} {pct:.0f}%{flag}{RESET}')
     print()
 
 
