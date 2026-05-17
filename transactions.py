@@ -106,8 +106,12 @@ def list_transactions():
     print(f'{BOLD}{"ID":>4} {"Дата":<12} {"Тип":<8} {"Категория":<20} {"Сумма":>10} Комментарий{RESET}')
     print('-' * 80)
     for t in reversed(txns):
-        color = GREEN if t['type'] == 'income' else RED
-        sign = '+' if t['type'] == 'income' else '-'
+        if t['type'] == 'income':
+            color, sign = GREEN, '+'
+        elif t['type'] == 'expense':
+            color, sign = RED, '-'
+        else:
+            color, sign = CYAN, '▶'
         print(f'{t["id"]:>4} {t["date"]:<12} {color}{t["type"]:<8}{RESET} {t["category"]:<20} {color}{sign}{t["amount"]:>8.2f}{RESET} {t["comment"]}')
 
     print()
@@ -179,8 +183,12 @@ def _delete_transaction(data, txn_id):
     if txn is None:
         print(f'{RED}Транзакция с ID {txn_id} не найдена{RESET}')
         return
-    color = GREEN if txn['type'] == 'income' else RED
-    sign = '+' if txn['type'] == 'income' else '-'
+    if txn['type'] == 'income':
+        color, sign = GREEN, '+'
+    elif txn['type'] == 'expense':
+        color, sign = RED, '-'
+    else:
+        color, sign = CYAN, '▶'
     print(f'  {txn["date"]} {txn["category"]} {color}{sign}{txn["amount"]:.2f}{RESET}')
     confirm = input(f'{BOLD}Удалить? (д/н): {RESET}').strip().lower()
     if confirm in ('д', 'y', 'да', 'yes'):

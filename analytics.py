@@ -65,8 +65,10 @@ def show_statistics():
 
     incomes = [t for t in txns if t['type'] == 'income']
     expenses = [t for t in txns if t['type'] == 'expense']
+    savings = [t for t in txns if t['type'] == 'saving']
     total_income = sum(t['amount'] for t in incomes)
     total_expense = sum(t['amount'] for t in expenses)
+    total_savings = sum(t['amount'] for t in savings)
     balance = total_income - total_expense
 
     inv = data['investments']
@@ -76,6 +78,8 @@ def show_statistics():
     print(f'💰 Баланс: {GREEN if balance >= 0 else RED}{balance:,.2f} ₽{RESET}')
     print(f'📈 Доходы: {GREEN}{total_income:,.2f} ₽{RESET}')
     print(f'📉 Расходы: {RED}{total_expense:,.2f} ₽{RESET}')
+    if total_savings > 0:
+        print(f'🏦 Сбережения: {CYAN}{total_savings:,.2f} ₽{RESET}')
     if total_income > 0:
         pct = (total_expense / total_income) * 100
         print(f'📊 Норма расходов: {pct:.0f}% от дохода')
@@ -123,14 +127,17 @@ def _show_monthly_chart(txns):
         return
     months_income = defaultdict(float)
     months_expense = defaultdict(float)
+    months_savings = defaultdict(float)
     for t in txns:
         m = t['date'][:7]
         if t['type'] == 'income':
             months_income[m] += t['amount']
-        else:
+        elif t['type'] == 'expense':
             months_expense[m] += t['amount']
+        else:
+            months_savings[m] += t['amount']
 
-    all_months = sorted(set(months_income) | set(months_expense))
+    all_months = sorted(set(months_income) | set(months_expense) | set(months_savings))
     if len(all_months) < 1:
         return
 
@@ -141,9 +148,12 @@ def _show_monthly_chart(txns):
     for m in all_months:
         inc = months_income.get(m, 0)
         exp = months_expense.get(m, 0)
+        sav = months_savings.get(m, 0)
         print(f'  {m}')
         print(f'    {GREEN}█{RESET} {"доход":<7} {inc:>8.2f} {_bar(inc, max_val)}')
         print(f'    {RED}█{RESET} {"расход":<7} {exp:>8.2f} {_bar(exp, max_val)}')
+        if sav > 0:
+            print(f'    {CYAN}█{RESET} {"сбереж":<7} {sav:>8.2f} {_bar(sav, max_val)}')
     print()
 
 
@@ -153,18 +163,18 @@ def _show_balance_trend(txns):
         return
 
     print(f'{BOLD}Баланс по месяцам (накопленный):{RESET}')
-    balances = defaultdict(float)
+    monthly = defaultdict(float)
     for t in txns:
         m = t['date'][:7]
         if t['type'] == 'income':
-            balances[m] += t['amount']
+            monthly[m] += t['amount']
         else:
-            balances[m] -= t['amount']
+            monthly[m] -= t['amount']
 
     cumulative = 0.0
-    max_abs = max(abs(v) for v in balances.values())
-    for m in sorted(balances):
-        cumulative += balances[m]
+    max_abs = max(abs(v) for v in monthly.values())
+    for m in sorted(monthly):
+        cumulative += monthly[m]
         color = GREEN if cumulative >= 0 else RED
         bar = _bar(abs(cumulative), max_abs)
         print(f'  {m} {color}{cumulative:>10.2f}{RESET} {bar}')
@@ -231,7 +241,7 @@ def _add_to_investments(data):
         _ensure_category(data, 'expense', 'Инвестиции')
         data['investments']['total_invested'] += amount
         data['investments']['current_value'] += amount
-        _make_txn(data, 'expense', 'Инвестиции', amount)
+        _make_txn(data, 'saving', 'Инвестиции', amount)
         print(f'{GREEN}Добавлено {amount:.2f} ₽ в инвестиции{RESET}')
     except ValueError:
         print(f'{RED}Неверное число{RESET}')
@@ -258,7 +268,7 @@ def _add_to_pillow(data):
             return
         _ensure_category(data, 'expense', 'Подушка')
         data['safety_pillow']['current'] += amount
-        _make_txn(data, 'expense', 'Подушка', amount)
+        _make_txn(data, 'saving', 'Подушка', amount)
         print(f'{GREEN}Добавлено {amount:.2f} ₽ в подушку{RESET}')
     except ValueError:
         print(f'{RED}Неверное число{RESET}')
