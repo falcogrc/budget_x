@@ -1,5 +1,14 @@
 from config import GREEN, RED, YELLOW, CYAN, BOLD, RESET, today
 from storage import load, save
+from datetime import datetime
+
+
+def _valid_date(s):
+    try:
+        datetime.strptime(s, '%Y-%m-%d')
+        return True
+    except ValueError:
+        return False
 
 
 def _next_id(data):
@@ -11,7 +20,12 @@ def _next_id(data):
 def _get_date():
     default = today()
     inp = input(f'Дата [{default}]: ').strip()
-    return inp if inp else default
+    if not inp:
+        return default
+    if _valid_date(inp):
+        return inp
+    print(f'{RED}Неверный формат даты, используется {default}{RESET}')
+    return default
 
 
 def add_income():
@@ -28,6 +42,9 @@ def add_income():
         return
     try:
         amount = float(input('Сумма: '))
+        if amount <= 0:
+            print(f'{RED}Сумма должна быть положительной{RESET}')
+            return
     except ValueError:
         print(f'{RED}Неверная сумма{RESET}')
         return
@@ -60,6 +77,9 @@ def add_expense():
         return
     try:
         amount = float(input('Сумма: '))
+        if amount <= 0:
+            print(f'{RED}Сумма должна быть положительной{RESET}')
+            return
     except ValueError:
         print(f'{RED}Неверная сумма{RESET}')
         return
@@ -79,7 +99,7 @@ def add_expense():
 
 
 def _apply_filter(txns):
-    print(f'{BOLD}Фильтр:{RESET} Enter=все, д=доходы, р=расходы, дата(2026-05), текст')
+    print(f'{BOLD}Фильтр:{RESET} Enter=все, д=доходы, р=расходы, дата(2026-05), диапазон(2026-03-01 2026-03-15), текст')
     filt = input('Фильтр: ').strip().lower()
     if not filt:
         return txns
@@ -87,6 +107,10 @@ def _apply_filter(txns):
         return [t for t in txns if t['type'] == 'income']
     if filt == 'р':
         return [t for t in txns if t['type'] == 'expense']
+    parts = filt.split()
+    if len(parts) == 2:
+        if _valid_date(parts[0]) and _valid_date(parts[1]):
+            return [t for t in txns if parts[0] <= t['date'] <= parts[1]]
     if len(filt) == 7 and filt[4] == '-':
         return [t for t in txns if t['date'].startswith(filt)]
     return [t for t in txns if filt in t['category'].lower() or filt in t['comment'].lower()]
@@ -169,7 +193,12 @@ def _edit_transaction(data, txn_id):
         amount = txn['amount']
 
     inp = input(f'Дата [{txn["date"]}]: ').strip()
-    date = inp if inp else txn['date']
+    if inp:
+        date = inp if _valid_date(inp) else txn['date']
+        if inp != date:
+            print(f'{RED}Неверный формат, оставлено {txn["date"]}{RESET}')
+    else:
+        date = txn['date']
 
     inp = input(f'Комментарий [{txn["comment"]}]: ').strip()
     comment = inp if inp else txn['comment']

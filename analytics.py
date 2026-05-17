@@ -1,6 +1,7 @@
 from collections import defaultdict
 from config import GREEN, RED, YELLOW, CYAN, BOLD, RESET, clear_screen, current_month, today
 from storage import load, save
+from transactions import _next_id
 
 
 def _bar(value, max_val, width=30):
@@ -19,14 +20,13 @@ def _ensure_category(data, ttype, name):
 
 def _make_txn(data, ttype, category, amount):
     txn = {
-        'id': data['next_id'],
+        'id': _next_id(data),
         'type': ttype,
         'category': category,
         'amount': amount,
         'date': today(),
         'comment': '',
     }
-    data['next_id'] += 1
     data['transactions'].append(txn)
     save(data)
 
@@ -51,15 +51,15 @@ def _choose_period():
         end = input('Конец (ГГГГ-ММ, Enter=всё): ').strip()
         if end:
             return lambda t: t['date'] >= start and t['date'] <= end + '-31', f'{start} – {end}'
-        return lambda t: t['date'] >= start, f'c {start}'
+        return lambda t: t['date'] >= start, f'с {start}'
     else:
         return lambda t: True, 'всё время'
 
 
 def show_statistics():
+    clear_screen()
     data = load()
     period_filter, period_label = _choose_period()
-    clear_screen()
     txns = [t for t in data['transactions'] if period_filter(t)]
 
     if not txns:
@@ -214,8 +214,8 @@ def show_investments():
     print(f'{BOLD}💼 Инвестиции и 🛡️ Подушка безопасности{RESET}\n')
 
     print(f'{CYAN}Инвестиции:{RESET}')
-    print(f'  Вложено всего:    {inv["total_invested"]:>10.2f} ₽')
-    print(f'  Текущая стоимость: {inv["current_value"]:>10.2f} ₽')
+    print(f'  Вложено всего:     {inv["total_invested"]:>12,.2f} ₽')
+    print(f'  Текущая стоимость: {inv["current_value"]:>12,.2f} ₽')
     if inv['total_invested'] > 0:
         pct = ((inv['current_value'] - inv['total_invested']) / inv['total_invested']) * 100
         color = GREEN if pct >= 0 else RED
@@ -225,8 +225,8 @@ def show_investments():
 
     print()
     print(f'{CYAN}Подушка безопасности:{RESET}')
-    print(f'  Накоплено: {pillow["current"]:>10.2f} ₽')
-    print(f'  Цель:      {pillow["goal"]:>10.2f} ₽')
+    print(f'  Накоплено: {pillow["current"]:>12,.2f} ₽')
+    print(f'  Цель:      {pillow["goal"]:>12,.2f} ₽')
     if pillow['goal'] > 0:
         pct = (pillow['current'] / pillow['goal']) * 100
         width = 30

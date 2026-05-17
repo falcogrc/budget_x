@@ -12,7 +12,7 @@ def export_csv():
         return
 
     print(f'{BOLD}Период:{RESET}')
-    print(f'  Enter=всё, дата (2026-05), диапазон (2026-01 2026-03)')
+    print(f'  Enter=всё, месяц(2026-05), диапазон(2026-03-01 2026-03-15)')
     inp = input('Период: ').strip()
     if inp:
         parts = inp.split()
@@ -26,7 +26,7 @@ def export_csv():
         return
 
     os.makedirs(EXPORT_DIR, exist_ok=True)
-    filename = f'budget_{today().replace("-", "")}.csv'
+    filename = f'budget_{today()}.csv'
     filepath = os.path.join(EXPORT_DIR, filename)
 
     with open(filepath, 'w', encoding='utf-8-sig', newline='') as f:

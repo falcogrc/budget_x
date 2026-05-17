@@ -59,7 +59,7 @@ def show_menu():
         ('1', '➕ Доход', '2', '➖ Расход'),
         ('3', '📋 Список', '4', '💼 Инвестиции + Подушка'),
         ('5', '📊 Статистика', '6', '🏷️ Категории'),
-        ('7', '💾 Выгрузить', '0', '🚪 Выход'),
+        ('7', '💾 Выгрузить', '8', '🚪 Выход'),
     ]
     for left_key, left_label, right_key, right_label in menu_items:
         left = f'[{left_key}] {left_label}' if left_key else ''
@@ -92,7 +92,7 @@ def main():
         elif choice == '7':
             clear_screen()
             export_csv()
-        elif choice == '0':
+        elif choice == '8':
             clear_screen()
             print(f'{GREEN}До свидания!{RESET}')
             sys.exit(0)

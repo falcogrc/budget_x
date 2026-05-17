@@ -32,6 +32,10 @@ def load():
         data['next_id'] = 1
     if 'budgets' not in data:
         data['budgets'] = {}
+    if 'investments' not in data:
+        data['investments'] = {'total_invested': 0.0, 'current_value': 0.0}
+    if 'safety_pillow' not in data:
+        data['safety_pillow'] = {'goal': 0.0, 'current': 0.0}
     return data
 
 def save(data):
