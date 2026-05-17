@@ -1,5 +1,5 @@
 from collections import defaultdict
-from config import GREEN, RED, YELLOW, CYAN, BOLD, RESET, current_month
+from config import GREEN, RED, YELLOW, CYAN, BOLD, RESET, clear_screen, current_month, today
 from storage import load, save
 
 
@@ -8,13 +8,63 @@ def _bar(value, max_val, width=30):
     return '█' * filled + '░' * (width - filled)
 
 
+def _ensure_category(data, ttype, name):
+    if name not in data['categories'][ttype]:
+        data['categories'][ttype].append(name)
+        save(data)
+
+
+def _make_txn(data, ttype, category, amount):
+    txn = {
+        'id': data['next_id'],
+        'type': ttype,
+        'category': category,
+        'amount': amount,
+        'date': today(),
+        'comment': '',
+    }
+    data['next_id'] += 1
+    data['transactions'].append(txn)
+    save(data)
+
+
+def _choose_period():
+    print(f'{BOLD}Период:{RESET}')
+    print(f'  1. Текущий месяц')
+    print(f'  2. Прошлый месяц')
+    print(f'  3. Всё время')
+    print(f'  4. Свой диапазон')
+    choice = input('Выберите: ').strip()
+    cur_month = current_month()
+    y, m = cur_month.split('-')
+    prev_month = f'{y}-{int(m)-1:02d}' if int(m) > 1 else f'{int(y)-1}-12'
+
+    if choice == '1':
+        return lambda t: t['date'].startswith(cur_month), cur_month
+    elif choice == '2':
+        return lambda t: t['date'].startswith(prev_month), prev_month
+    elif choice == '4':
+        start = input('Начало (ГГГГ-ММ): ').strip()
+        end = input('Конец (ГГГГ-ММ, Enter=всё): ').strip()
+        if end:
+            return lambda t: t['date'] >= start and t['date'] <= end + '-31', f'{start} – {end}'
+        return lambda t: t['date'] >= start, f'c {start}'
+    else:
+        return lambda t: True, 'всё время'
+
+
 def show_statistics():
     data = load()
-    txns = data['transactions']
-    month = current_month()
+    period_filter, period_label = _choose_period()
+    clear_screen()
+    txns = [t for t in data['transactions'] if period_filter(t)]
 
-    incomes = [t for t in txns if t['type'] == 'income' and t['date'].startswith(month)]
-    expenses = [t for t in txns if t['type'] == 'expense' and t['date'].startswith(month)]
+    if not txns:
+        print(f'{YELLOW}Нет операций за выбранный период{RESET}')
+        return
+
+    incomes = [t for t in txns if t['type'] == 'income']
+    expenses = [t for t in txns if t['type'] == 'expense']
     total_income = sum(t['amount'] for t in incomes)
     total_expense = sum(t['amount'] for t in expenses)
     balance = total_income - total_expense
@@ -22,16 +72,20 @@ def show_statistics():
     inv = data['investments']
     pillow = data['safety_pillow']
 
-    print(f'{BOLD}📊 Статистика{RESET}\n')
+    print(f'{BOLD}📊 Статистика • {period_label}{RESET}\n')
     print(f'💰 Баланс: {GREEN if balance >= 0 else RED}{balance:,.2f} ₽{RESET}')
     print(f'📈 Доходы: {GREEN}{total_income:,.2f} ₽{RESET}')
     print(f'📉 Расходы: {RED}{total_expense:,.2f} ₽{RESET}')
+    if total_income > 0:
+        pct = (total_expense / total_income) * 100
+        print(f'📊 Норма расходов: {pct:.0f}% от дохода')
 
+    print()
     if inv['total_invested'] > 0:
         pct = ((inv['current_value'] - inv['total_invested']) / inv['total_invested']) * 100
         color = GREEN if pct >= 0 else RED
-        print(f'💼 Инвестиции: {inv["current_value"]:,.2f} ₽ {color}({pct:+.1f}%){RESET}')
-    else:
+        print(f'💼 Инвестиции: {inv["current_value"]:,.2f} ₽ (вложено {inv["total_invested"]:,.2f} ₽) {color}{pct:+.1f}%{RESET}')
+    elif inv['current_value'] > 0:
         print(f'💼 Инвестиции: {inv["current_value"]:,.2f} ₽')
 
     if pillow['goal'] > 0:
@@ -44,21 +98,24 @@ def show_statistics():
         print(f'🛡️ Подушка: {pillow["current"]:,.2f} ₽')
 
     print()
-
-    # График расходов по категориям
-    if expenses:
-        print(f'{BOLD}Расходы по категориям:{RESET}')
-        cat_totals = defaultdict(float)
-        for t in expenses:
-            cat_totals[t['category']] += t['amount']
-        max_cat = max(cat_totals.values())
-        for cat, amount in sorted(cat_totals.items(), key=lambda x: -x[1]):
-            bar = _bar(amount, max_cat)
-            print(f'  {cat:<20} {RED}{amount:>8.2f}{RESET} {bar}')
-        print()
-
-    # График динамики по месяцам
+    _category_chart(incomes, 'Доходы по категориям', GREEN)
+    _category_chart(expenses, 'Расходы по категориям', RED)
     _show_monthly_chart(txns)
+    _show_balance_trend(txns)
+
+
+def _category_chart(txns, title, color):
+    if not txns:
+        return
+    print(f'{BOLD}{title}:{RESET}')
+    cat_totals = defaultdict(float)
+    for t in txns:
+        cat_totals[t['category']] += t['amount']
+    max_cat = max(cat_totals.values())
+    for cat, amount in sorted(cat_totals.items(), key=lambda x: -x[1]):
+        bar = _bar(amount, max_cat)
+        print(f'  {cat:<20} {color}{amount:>8.2f}{RESET} {bar}')
+    print()
 
 
 def _show_monthly_chart(txns):
@@ -87,6 +144,30 @@ def _show_monthly_chart(txns):
         print(f'  {m}')
         print(f'    {GREEN}█{RESET} {"доход":<7} {inc:>8.2f} {_bar(inc, max_val)}')
         print(f'    {RED}█{RESET} {"расход":<7} {exp:>8.2f} {_bar(exp, max_val)}')
+    print()
+
+
+def _show_balance_trend(txns):
+    months = sorted(set(t['date'][:7] for t in txns))
+    if len(months) < 2:
+        return
+
+    print(f'{BOLD}Баланс по месяцам (накопленный):{RESET}')
+    balances = defaultdict(float)
+    for t in txns:
+        m = t['date'][:7]
+        if t['type'] == 'income':
+            balances[m] += t['amount']
+        else:
+            balances[m] -= t['amount']
+
+    cumulative = 0.0
+    max_abs = max(abs(v) for v in balances.values())
+    for m in sorted(balances):
+        cumulative += balances[m]
+        color = GREEN if cumulative >= 0 else RED
+        bar = _bar(abs(cumulative), max_abs)
+        print(f'  {m} {color}{cumulative:>10.2f}{RESET} {bar}')
     print()
 
 
@@ -123,16 +204,19 @@ def show_investments():
         print(f'{BOLD}Действия:{RESET}')
         print(f'  1. Пополнить инвестиции')
         print(f'  2. Обновить текущую стоимость')
-        print(f'  3. Обновить подушку')
-        print(f'  4. Назад')
+        print(f'  3. Пополнить подушку')
+        print(f'  4. Установить цель подушки')
+        print(f'  5. Назад')
         choice = input('Выберите: ').strip()
         if choice == '1':
             _add_to_investments(data)
         elif choice == '2':
             _update_investment_value(data)
         elif choice == '3':
-            _edit_pillow(data)
+            _add_to_pillow(data)
         elif choice == '4':
+            _set_pillow_goal(data)
+        elif choice == '5':
             break
         else:
             print('Неверный выбор')
@@ -144,9 +228,10 @@ def _add_to_investments(data):
         if amount <= 0:
             print(f'{RED}Сумма должна быть положительной{RESET}')
             return
+        _ensure_category(data, 'expense', 'Инвестиции')
         data['investments']['total_invested'] += amount
         data['investments']['current_value'] += amount
-        save(data)
+        _make_txn(data, 'expense', 'Инвестиции', amount)
         print(f'{GREEN}Добавлено {amount:.2f} ₽ в инвестиции{RESET}')
     except ValueError:
         print(f'{RED}Неверное число{RESET}')
@@ -165,7 +250,21 @@ def _update_investment_value(data):
         print(f'{RED}Неверное число{RESET}')
 
 
-def _edit_pillow(data):
+def _add_to_pillow(data):
+    try:
+        amount = float(input('Сколько добавить в подушку: '))
+        if amount <= 0:
+            print(f'{RED}Сумма должна быть положительной{RESET}')
+            return
+        _ensure_category(data, 'expense', 'Подушка')
+        data['safety_pillow']['current'] += amount
+        _make_txn(data, 'expense', 'Подушка', amount)
+        print(f'{GREEN}Добавлено {amount:.2f} ₽ в подушку{RESET}')
+    except ValueError:
+        print(f'{RED}Неверное число{RESET}')
+
+
+def _set_pillow_goal(data):
     try:
         goal = input(f'Цель подушки [{data["safety_pillow"]["goal"]:.2f}]: ').strip()
         if goal:
@@ -177,6 +276,3 @@ def _edit_pillow(data):
         print(f'{GREEN}Подушка обновлена{RESET}')
     except ValueError:
         print(f'{RED}Неверное число{RESET}')
-
-
-

@@ -1,4 +1,4 @@
-from config import GREEN, RED, CYAN, BOLD, RESET, today
+from config import GREEN, RED, YELLOW, CYAN, BOLD, RESET, today
 from storage import load, save
 
 
@@ -78,12 +78,31 @@ def add_expense():
     print(f'{RED}Расход {amount:.2f} добавлен!{RESET}')
 
 
+def _apply_filter(txns):
+    print(f'{BOLD}Фильтр:{RESET} Enter=все, д=доходы, р=расходы, дата(2026-05), текст')
+    filt = input('Фильтр: ').strip().lower()
+    if not filt:
+        return txns
+    if filt == 'д':
+        return [t for t in txns if t['type'] == 'income']
+    if filt == 'р':
+        return [t for t in txns if t['type'] == 'expense']
+    if len(filt) == 7 and filt[4] == '-':
+        return [t for t in txns if t['date'].startswith(filt)]
+    return [t for t in txns if filt in t['category'].lower() or filt in t['comment'].lower()]
+
+
 def list_transactions():
     data = load()
     txns = data['transactions']
     if not txns:
         print('Нет операций')
         return
+    txns = _apply_filter(txns)
+    if not txns:
+        print(f'{YELLOW}Нет операций по фильтру{RESET}')
+        return
+
     print(f'{BOLD}{"ID":>4} {"Дата":<12} {"Тип":<8} {"Категория":<20} {"Сумма":>10} Комментарий{RESET}')
     print('-' * 80)
     for t in reversed(txns):

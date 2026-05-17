@@ -1,6 +1,6 @@
 import csv
 import os
-from config import EXPORT_DIR, GREEN, RED, BOLD, RESET, today
+from config import EXPORT_DIR, GREEN, RED, YELLOW, BOLD, RESET, today
 from storage import load
 
 
@@ -8,25 +8,35 @@ def export_csv():
     data = load()
     txns = data['transactions']
     if not txns:
-        print(f'{RED}Нет операций для выгрузки{RESET}')
+        print(f'{YELLOW}Нет операций для выгрузки{RESET}')
+        return
+
+    print(f'{BOLD}Период:{RESET}')
+    print(f'  Enter=всё, дата (2026-05), диапазон (2026-01 2026-03)')
+    inp = input('Период: ').strip()
+    if inp:
+        parts = inp.split()
+        if len(parts) == 1 and len(parts[0]) == 7:
+            txns = [t for t in txns if t['date'].startswith(parts[0])]
+        elif len(parts) == 2:
+            txns = [t for t in txns if parts[0] <= t['date'][:7] <= parts[1]]
+
+    if not txns:
+        print(f'{YELLOW}Нет операций за выбранный период{RESET}')
         return
 
     os.makedirs(EXPORT_DIR, exist_ok=True)
-    filename = f'budget_{today()}.csv'
+    filename = f'budget_{today().replace("-", "")}.csv'
     filepath = os.path.join(EXPORT_DIR, filename)
 
     with open(filepath, 'w', encoding='utf-8-sig', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(['ID', 'Дата', 'Тип', 'Категория', 'Сумма', 'Комментарий'])
         for t in txns:
-            writer.writerow([
-                t['id'], t['date'], t['type'],
-                t['category'], t['amount'], t['comment'],
-            ])
+            writer.writerow([t['id'], t['date'], t['type'], t['category'], t['amount'], t['comment']])
 
     print(f'{GREEN}Экспортировано: {filepath}{RESET}')
 
-    # Доп. сводка
     total_income = sum(t['amount'] for t in txns if t['type'] == 'income')
     total_expense = sum(t['amount'] for t in txns if t['type'] == 'expense')
     print(f'{BOLD}Всего доходов: {total_income:,.2f} ₽{RESET}')
