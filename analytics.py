@@ -105,14 +105,15 @@ def show_statistics():
         print(f'🛡️ Подушка: {pillow["current"]:,.2f} ₽')
 
     print()
+    months = len(set(t['date'][:7] for t in expenses)) or 1
     _category_chart(incomes, 'Доходы по категориям', GREEN)
-    _category_chart(expenses, 'Расходы по категориям', RED)
-    _show_budget_progress(data, expenses)
+    _category_chart(expenses, 'Расходы по категориям', RED,
+                    data.get('budgets', {}), months)
     _show_monthly_chart(txns)
     _show_balance_trend(txns)
 
 
-def _category_chart(txns, title, color):
+def _category_chart(txns, title, color, budgets=None, months=1):
     if not txns:
         return
     print(f'{BOLD}{title}:{RESET}')
@@ -122,7 +123,15 @@ def _category_chart(txns, title, color):
     max_cat = max(cat_totals.values())
     for cat, amount in sorted(cat_totals.items(), key=lambda x: -x[1]):
         bar = _bar(amount, max_cat)
-        print(f'  {cat:<20} {color}{amount:>12,.2f}{RESET} {bar}')
+        suffix = ''
+        if budgets and cat in budgets and budgets[cat] > 0:
+            limit = budgets[cat]
+            fact_avg = amount / months
+            pct = (fact_avg / limit) * 100
+            flag = ' ✅' if pct <= 100 else ''
+            bar_color = GREEN if pct <= 100 else RED
+            suffix = f' {bar_color}{pct:.0f}%{flag} ({limit:,.0f}){RESET}'
+        print(f'  {cat:<20} {color}{amount:>12,.2f}{RESET} {bar}{suffix}')
     print()
 
 
@@ -182,27 +191,6 @@ def _show_balance_trend(txns):
         color = GREEN if cumulative >= 0 else RED
         bar = _bar(abs(cumulative), max_abs)
         print(f'  {m} {color}{cumulative:>12,.2f}{RESET} {bar}')
-    print()
-
-
-def _show_budget_progress(data, expenses):
-    budgets = data.get('budgets', {})
-    active = {c: budgets[c] for c in budgets if budgets[c] > 0}
-    if not active:
-        return
-
-    spent = defaultdict(float)
-    for t in expenses:
-        spent[t['category']] += t['amount']
-
-    print(f'{BOLD}Бюджет по категориям:{RESET}')
-    for cat, limit in sorted(active.items()):
-        fact = spent.get(cat, 0.0)
-        pct = (fact / limit) * 100 if limit > 0 else 0
-        bar = _bar(fact, limit, width=20)
-        color = GREEN if pct <= 100 else RED
-        flag = ' ✅' if pct <= 100 else ''
-        print(f'  {cat:<20} {color}{fact:>12,.2f} / {limit:>12,.2f} {bar} {pct:.0f}%{flag}{RESET}')
     print()
 
 

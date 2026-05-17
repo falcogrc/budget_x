@@ -97,6 +97,8 @@ def main():
             print(f'{GREEN}До свидания!{RESET}')
             sys.exit(0)
         else:
+            if not choice:
+                continue
             print(f'{RED}Неверный выбор{RESET}')
         input(f'\n{YELLOW}Нажмите Enter...{RESET}')
 
