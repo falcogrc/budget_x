@@ -104,6 +104,7 @@ def show_statistics():
     print()
     _category_chart(incomes, 'Доходы по категориям', GREEN)
     _category_chart(expenses, 'Расходы по категориям', RED)
+    _show_budget_progress(data, expenses)
     _show_monthly_chart(txns)
     _show_balance_trend(txns)
 
@@ -178,6 +179,27 @@ def _show_balance_trend(txns):
         color = GREEN if cumulative >= 0 else RED
         bar = _bar(abs(cumulative), max_abs)
         print(f'  {m} {color}{cumulative:>10.2f}{RESET} {bar}')
+    print()
+
+
+def _show_budget_progress(data, expenses):
+    budgets = data.get('budgets', {})
+    active = {c: budgets[c] for c in budgets if budgets[c] > 0}
+    if not active:
+        return
+
+    spent = defaultdict(float)
+    for t in expenses:
+        spent[t['category']] += t['amount']
+
+    print(f'{BOLD}Бюджет по категориям:{RESET}')
+    for cat, limit in sorted(active.items()):
+        fact = spent.get(cat, 0.0)
+        pct = (fact / limit) * 100 if limit > 0 else 0
+        bar = _bar(fact, limit, width=20)
+        color = GREEN if pct <= 100 else RED
+        flag = ' ✅' if pct <= 100 else ''
+        print(f'  {cat:<20} {color}{fact:>8.2f} / {limit:>8.2f} {bar} {pct:.0f}%{flag}{RESET}')
     print()
 
 

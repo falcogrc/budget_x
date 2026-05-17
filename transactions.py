@@ -118,15 +118,16 @@ def list_transactions():
     txn_id = input(f'{BOLD}ID транзакции для редактирования, У+ID для удаления, Enter — назад: {RESET}').strip()
     if not txn_id:
         return
-    if txn_id.startswith('у') or txn_id.startswith('y'):
+    raw = txn_id.lower().replace('+', '').replace(' ', '')
+    if raw[0] in ('у', 'y'):
         try:
-            delete_id = int(txn_id[1:])
+            delete_id = int(raw[1:])
             _delete_transaction(data, delete_id)
         except (ValueError, IndexError):
             print(f'{RED}Неверный ID{RESET}')
     else:
         try:
-            edit_id = int(txn_id)
+            edit_id = int(raw)
             _edit_transaction(data, edit_id)
         except (ValueError, IndexError):
             print(f'{RED}Неверный ID{RESET}')

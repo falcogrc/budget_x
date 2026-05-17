@@ -18,6 +18,7 @@ def default_data():
             'goal': 0.0,
             'current': 0.0,
         },
+        'budgets': {},
     }
 
 def load():
@@ -29,6 +30,8 @@ def load():
         data = json.load(f)
     if 'next_id' not in data:
         data['next_id'] = 1
+    if 'budgets' not in data:
+        data['budgets'] = {}
     return data
 
 def save(data):
