@@ -1,7 +1,8 @@
 import csv
 import os
-from config import EXPORT_DIR, GREEN, RED, YELLOW, BOLD, RESET, today
+from config import EXPORT_DIR, GREEN, YELLOW, BOLD, RESET, today
 from storage import load
+from transactions import _valid_date
 
 
 def export_csv():
@@ -18,6 +19,8 @@ def export_csv():
         parts = inp.split()
         if len(parts) == 1 and len(parts[0]) == 7:
             txns = [t for t in txns if t['date'].startswith(parts[0])]
+        elif len(parts) == 2 and _valid_date(parts[0]) and _valid_date(parts[1]):
+            txns = [t for t in txns if parts[0] <= t['date'] <= parts[1]]
         elif len(parts) == 2:
             txns = [t for t in txns if parts[0] <= t['date'][:7] <= parts[1]]
 

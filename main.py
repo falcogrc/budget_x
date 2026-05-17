@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import sys
-from config import clear_screen, GREEN, RED, YELLOW, CYAN, BOLD, RESET, current_month
+from config import clear_screen, GREEN, RED, YELLOW, BOLD, RESET, current_month
 from storage import load
 from transactions import add_income, add_expense, list_transactions
 from categories import manage_categories

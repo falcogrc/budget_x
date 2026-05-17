@@ -143,6 +143,8 @@ def list_transactions():
     if not txn_id:
         return
     raw = txn_id.lower().replace('+', '').replace(' ', '')
+    if not raw:
+        return
     if raw[0] in ('у', 'y'):
         try:
             delete_id = int(raw[1:])
@@ -168,6 +170,10 @@ def _edit_transaction(data, txn_id):
     idx, txn = _find_txn(data, txn_id)
     if txn is None:
         print(f'{RED}Транзакция с ID {txn_id} не найдена{RESET}')
+        return
+
+    if txn['type'] == 'saving':
+        print(f'{RED}Сбережения нельзя редактировать{RESET}')
         return
 
     cats = data['categories'][txn['type']]
