@@ -72,7 +72,11 @@ def show_menu():
 def main():
     while True:
         show_menu()
-        choice = input().strip()
+        while True:
+            choice = input().strip()
+            if choice:
+                break
+            print(f'{BOLD}Ваш выбор:{RESET} ', end='', flush=True)
         if choice == '1':
             add_income()
         elif choice == '2':
@@ -83,12 +87,14 @@ def main():
         elif choice == '4':
             clear_screen()
             show_investments()
+            continue
         elif choice == '5':
             clear_screen()
             show_statistics()
         elif choice == '6':
             clear_screen()
             manage_categories()
+            continue
         elif choice == '7':
             clear_screen()
             export_csv()
@@ -97,8 +103,6 @@ def main():
             print(f'{GREEN}До свидания!{RESET}')
             sys.exit(0)
         else:
-            if not choice:
-                continue
             print(f'{RED}Неверный выбор{RESET}')
         input(f'\n{YELLOW}Нажмите Enter...{RESET}')
 
