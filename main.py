@@ -60,10 +60,12 @@ def show_menu():
     print(f'💰 Баланс: {GREEN if bal >= 0 else RED}{bal:,.2f} ₽{RESET}')
     print(f'📈 Доходы:  {GREEN}{inc:,.2f} ₽{RESET}')
     print(f'📉 Расходы: {RED}{exp:,.2f} ₽{RESET}')
-    if total_savings > 0:
+    if total_savings > 0 and inc > 0:
         pct = (total_savings / inc) * 100
         print(f'🏦 Отложено: {CYAN}{total_savings:,.2f} ₽ ({pct:.0f}% от дохода){RESET}')
-    elif inc > 0 and total_savings <= 0:
+    elif total_savings > 0:
+        print(f'🏦 Отложено: {CYAN}{total_savings:,.2f} ₽{RESET}')
+    elif inc > 0:
         print('🏦 Отложено: 0.00 ₽')
     print()
     print(_investment_line(data))
