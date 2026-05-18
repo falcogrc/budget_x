@@ -110,7 +110,7 @@ def show_statistics():
         _category_chart(expenses, 'Расходы по категориям', RED,
                         data.get('budgets', {}), months)
         _show_monthly_chart(txns)
-        _show_balance_trend(txns)
+        _show_balance_trend(txns, data)
 
 
 def _category_chart(txns, title, color, budgets=None, months=1):
@@ -177,11 +177,12 @@ def _show_monthly_chart(txns):
     print()
 
 
-def _show_balance_trend(txns):
+def _show_balance_trend(txns, data=None):
     months = sorted(set(t['date'][:7] for t in txns))
     if len(months) < 2:
         return
 
+    all_time = data and len(txns) == len(data['transactions'])
     print(f'{BOLD}Баланс по месяцам (накопленный):{RESET}')
     monthly = defaultdict(float)
     for t in txns:
@@ -191,8 +192,10 @@ def _show_balance_trend(txns):
         else:
             monthly[m] -= t['amount']
 
-    cumulative = 0.0
+    cumulative = data['initial_balance'] if all_time else 0.0
     max_abs = max(abs(v) for v in monthly.values())
+    if all_time:
+        max_abs = max(max_abs, abs(cumulative))
     bw = bar_width()
     for m in sorted(monthly):
         cumulative += monthly[m]
