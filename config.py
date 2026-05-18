@@ -15,8 +15,9 @@ DEFAULT_CATEGORIES = {
     'expense': ['Еда', 'Транспорт', 'ЖКХ', 'Развлечения', 'Здоровье'],
 }
 
-DATA_FILE = 'data/budget.json'
-EXPORT_DIR = 'exports'
+_BASE = os.path.dirname(os.path.abspath(__file__))
+DATA_FILE = os.path.join(_BASE, 'data', 'budget.json')
+EXPORT_DIR = os.path.join(_BASE, 'exports')
 
 def clear_screen():
     print('\033[2J\033[H', end='')
