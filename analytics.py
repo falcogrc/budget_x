@@ -239,7 +239,8 @@ def show_investments():
         print(f'  4. Пополнить подушку')
         print(f'  5. Вывести из подушки')
         print(f'  6. Установить цель подушки')
-        print(f'  7. Назад')
+        print(f'  7. ⚙️ Установить баланс')
+        print(f'  8. Назад')
         choice = input('Выберите: ').strip()
         if not choice:
             continue
@@ -256,6 +257,8 @@ def show_investments():
         elif choice == '6':
             _set_pillow_goal(data)
         elif choice == '7':
+            _set_balance(data)
+        elif choice == '8':
             break
         else:
             print('Неверный выбор')
@@ -348,5 +351,24 @@ def _set_pillow_goal(data):
             data['safety_pillow']['current'] = float(cur)
         save(data)
         print(f'{GREEN}Подушка обновлена{RESET}')
+    except ValueError:
+        print(f'{RED}Неверное число{RESET}')
+
+
+def _set_balance(data):
+    all_txns = data['transactions']
+    all_income = sum(t['amount'] for t in all_txns if t['type'] == 'income')
+    all_expense = sum(t['amount'] for t in all_txns if t['type'] == 'expense')
+    all_savings = sum(t['amount'] for t in all_txns if t['type'] == 'saving')
+    current_calc = data['initial_balance'] + all_income - all_expense - all_savings
+    print(f'Текущий рассчитанный баланс: {current_calc:,.2f} ₽')
+    try:
+        inp = input(f'{BOLD}Введите реальный баланс: {RESET}').strip()
+        if not inp:
+            return
+        real = float(inp)
+        data['initial_balance'] = real - (all_income - all_expense - all_savings)
+        save(data)
+        print(f'{GREEN}Баланс установлен: {real:,.2f} ₽{RESET}')
     except ValueError:
         print(f'{RED}Неверное число{RESET}')

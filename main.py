@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 from config import clear_screen, GREEN, RED, YELLOW, BOLD, RESET, current_month, bar_width
-from storage import load
+from storage import load, save
 from transactions import add_income, add_expense, list_transactions
 from categories import manage_categories
 from analytics import show_statistics, show_investments
@@ -9,16 +9,17 @@ from export import export_csv
 
 
 def _balance(data, month):
-    incomes = [t for t in data['transactions']
-               if t['type'] == 'income' and t['date'].startswith(month)]
-    expenses = [t for t in data['transactions']
-                if t['type'] == 'expense' and t['date'].startswith(month)]
-    savings = [t for t in data['transactions']
-               if t['type'] == 'saving' and t['date'].startswith(month)]
+    all_txns = data['transactions']
+    incomes = [t for t in all_txns if t['type'] == 'income' and t['date'].startswith(month)]
+    expenses = [t for t in all_txns if t['type'] == 'expense' and t['date'].startswith(month)]
     total_income = sum(t['amount'] for t in incomes)
     total_expense = sum(t['amount'] for t in expenses)
-    total_savings = sum(t['amount'] for t in savings)
-    return total_income - total_expense - total_savings, total_income, total_expense
+
+    all_income = sum(t['amount'] for t in all_txns if t['type'] == 'income')
+    all_expense = sum(t['amount'] for t in all_txns if t['type'] == 'expense')
+    all_savings = sum(t['amount'] for t in all_txns if t['type'] == 'saving')
+    bal = data['initial_balance'] + all_income - all_expense - all_savings
+    return bal, total_income, total_expense
 
 
 def _investment_line(data):
@@ -77,6 +78,20 @@ def show_menu():
 
 
 def main():
+    data = load()
+    if data['initial_balance'] == 0.0 and not data['transactions']:
+        clear_screen()
+        print(f'{BOLD}Добро пожаловать в Budget X!{RESET}')
+        print()
+        try:
+            bal = float(input('Сколько у вас денег на всех счетах? '))
+            data['initial_balance'] = bal
+            save(data)
+            print(f'{GREEN}Начальный баланс установлен: {bal:,.2f} ₽{RESET}')
+        except ValueError:
+            print(f'{YELLOW}Можно установить позже в меню Сбережения{RESET}')
+        input(f'\n{YELLOW}Нажмите Enter...{RESET}')
+
     while True:
         show_menu()
         while True:

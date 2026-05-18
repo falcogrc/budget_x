@@ -19,6 +19,7 @@ def default_data():
             'current': 0.0,
         },
         'budgets': {},
+        'initial_balance': 0.0,
     }
 
 def load():
@@ -36,6 +37,8 @@ def load():
         data['investments'] = {'total_invested': 0.0, 'current_value': 0.0}
     if 'safety_pillow' not in data:
         data['safety_pillow'] = {'goal': 0.0, 'current': 0.0}
+    if 'initial_balance' not in data:
+        data['initial_balance'] = 0.0
     return data
 
 def save(data):
