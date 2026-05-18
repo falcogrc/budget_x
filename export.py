@@ -13,8 +13,10 @@ def export_csv():
         return
 
     print(f'{BOLD}Период:{RESET}')
-    print(f'  Enter=всё, месяц(2026-05), диапазон(2026-03-01 2026-03-15)')
+    print(f'  Enter=назад, всё, месяц(2026-05), диапазон(2026-03-01 2026-03-15)')
     inp = input('Период: ').strip()
+    if not inp:
+        return
     if inp:
         parts = inp.split()
         if len(parts) == 1 and len(parts[0]) == 7:

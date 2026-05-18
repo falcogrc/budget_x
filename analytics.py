@@ -72,7 +72,10 @@ def show_statistics():
     total_income = sum(t['amount'] for t in incomes)
     total_expense = sum(t['amount'] for t in expenses)
     total_savings = sum(t['amount'] for t in savings)
-    balance = total_income - total_expense - total_savings
+    if len(txns) == len(data['transactions']):
+        balance = data['initial_balance'] + total_income - total_expense - total_savings
+    else:
+        balance = total_income - total_expense - total_savings
 
     inv = data['investments']
     pillow = data['safety_pillow']
@@ -239,8 +242,7 @@ def show_investments():
         print(f'  4. Пополнить подушку')
         print(f'  5. Вывести из подушки')
         print(f'  6. Установить цель подушки')
-        print(f'  7. ⚙️ Установить баланс')
-        print(f'  8. Назад')
+        print(f'  7. Назад')
         choice = input('Выберите: ').strip()
         if not choice:
             continue
@@ -257,8 +259,6 @@ def show_investments():
         elif choice == '6':
             _set_pillow_goal(data)
         elif choice == '7':
-            _set_balance(data)
-        elif choice == '8':
             break
         else:
             print('Неверный выбор')

@@ -4,7 +4,7 @@ from config import clear_screen, GREEN, RED, YELLOW, BOLD, RESET, current_month,
 from storage import load, save
 from transactions import add_income, add_expense, list_transactions
 from categories import manage_categories
-from analytics import show_statistics, show_investments
+from analytics import show_statistics, show_investments, _set_balance
 from export import export_csv
 
 
@@ -69,6 +69,7 @@ def show_menu():
         ('5', '📊 Статистика'),
         ('6', '🏷️ Категории'),
         ('7', '💾 Выгрузить'),
+        ('8', '⚙️ Баланс'),
         ('0', '🚪 Выход'),
     ]
     for key, label in menu_items:
@@ -89,7 +90,7 @@ def main():
             save(data)
             print(f'{GREEN}Начальный баланс установлен: {bal:,.2f} ₽{RESET}')
         except ValueError:
-            print(f'{YELLOW}Можно установить позже в меню Сбережения{RESET}')
+            print(f'{YELLOW}Можно установить позже: меню → 8 ⚙️ Баланс{RESET}')
         input(f'\n{YELLOW}Нажмите Enter...{RESET}')
 
     while True:
@@ -120,6 +121,9 @@ def main():
         elif choice == '7':
             clear_screen()
             export_csv()
+        elif choice == '8':
+            clear_screen()
+            _set_balance(load())
         elif choice == '0':
             clear_screen()
             print(f'{GREEN}До свидания!{RESET}')
