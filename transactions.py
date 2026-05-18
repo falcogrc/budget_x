@@ -229,6 +229,13 @@ def _delete_transaction(data, txn_id):
     confirm = input(f'{BOLD}Удалить? (д/н): {RESET}').strip().lower()
     if confirm in ('д', 'y', 'да', 'yes'):
         removed = data['transactions'].pop(idx)
+        if removed['type'] == 'saving':
+            amt = removed['amount']
+            if removed['category'] == 'Инвестиции':
+                data['investments']['total_invested'] = max(0, data['investments']['total_invested'] - amt)
+                data['investments']['current_value'] = max(0, data['investments']['current_value'] - amt)
+            elif removed['category'] == 'Подушка':
+                data['safety_pillow']['current'] = max(0, data['safety_pillow']['current'] - amt)
         save(data)
         print(f'{RED}Транзакция #{txn_id} удалена{RESET}')
     else:
