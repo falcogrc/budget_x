@@ -62,10 +62,6 @@ def show_statistics():
     period_filter, period_label = _choose_period()
     txns = [t for t in data['transactions'] if period_filter(t)]
 
-    if not txns:
-        print(f'{YELLOW}Нет операций за выбранный период{RESET}')
-        return
-
     incomes = [t for t in txns if t['type'] == 'income']
     expenses = [t for t in txns if t['type'] == 'expense']
     savings = [t for t in txns if t['type'] == 'saving']
@@ -107,13 +103,14 @@ def show_statistics():
     else:
         print(f'🛡️ Подушка: {pillow["current"]:,.2f} ₽')
 
-    print()
-    months = len(set(t['date'][:7] for t in expenses)) or 1
-    _category_chart(incomes, 'Доходы по категориям', GREEN)
-    _category_chart(expenses, 'Расходы по категориям', RED,
-                    data.get('budgets', {}), months)
-    _show_monthly_chart(txns)
-    _show_balance_trend(txns)
+    if txns:
+        print()
+        months = len(set(t['date'][:7] for t in expenses)) or 1
+        _category_chart(incomes, 'Доходы по категориям', GREEN)
+        _category_chart(expenses, 'Расходы по категориям', RED,
+                        data.get('budgets', {}), months)
+        _show_monthly_chart(txns)
+        _show_balance_trend(txns)
 
 
 def _category_chart(txns, title, color, budgets=None, months=1):
