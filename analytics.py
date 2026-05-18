@@ -72,7 +72,7 @@ def show_statistics():
     total_income = sum(t['amount'] for t in incomes)
     total_expense = sum(t['amount'] for t in expenses)
     total_savings = sum(t['amount'] for t in savings)
-    balance = total_income - total_expense
+    balance = total_income - total_expense - total_savings
 
     inv = data['investments']
     pillow = data['safety_pillow']
@@ -98,7 +98,7 @@ def show_statistics():
     if pillow['goal'] > 0:
         pct = (pillow['current'] / pillow['goal']) * 100
         width = 20
-        filled = int((pillow['current'] / pillow['goal']) * width)
+        filled = min(int((pillow['current'] / pillow['goal']) * width), width)
         bar = '█' * filled + '░' * (width - filled)
         print(f'🛡️ Подушка: {pillow["current"]:,.2f} / {pillow["goal"]:,.2f} ₽ {bar} {pct:.0f}%')
     else:
@@ -120,17 +120,21 @@ def _category_chart(txns, title, color, budgets=None, months=1):
     cat_totals = defaultdict(float)
     for t in txns:
         cat_totals[t['category']] += t['amount']
-    max_cat = max(cat_totals.values())
+    total = sum(cat_totals.values())
     for cat, amount in sorted(cat_totals.items(), key=lambda x: -x[1]):
-        bar = _bar(amount, max_cat)
         suffix = ''
         if budgets and cat in budgets and budgets[cat] > 0:
             limit = budgets[cat]
             fact_avg = amount / months
+            bar = _bar(fact_avg, limit, width=30)
             pct = (fact_avg / limit) * 100
             flag = ' ✅' if pct <= 100 else ''
             bar_color = GREEN if pct <= 100 else RED
             suffix = f' {bar_color}{pct:.0f}%{flag} ({limit:,.0f}){RESET}'
+        else:
+            bar = _bar(amount, total)
+            pct = (amount / total) * 100
+            suffix = f' {pct:.0f}%'
         print(f'  {cat:<20} {color}{amount:>12,.2f}{RESET} {bar}{suffix}')
     print()
 
@@ -218,7 +222,7 @@ def show_investments():
     if pillow['goal'] > 0:
         pct = (pillow['current'] / pillow['goal']) * 100
         width = 30
-        filled = int((pillow['current'] / pillow['goal']) * width)
+        filled = min(int((pillow['current'] / pillow['goal']) * width), width)
         bar = '█' * filled + '░' * (width - filled)
         print(f'  Прогресс:  {bar} {pct:.0f}%')
 
@@ -231,6 +235,8 @@ def show_investments():
         print(f'  4. Установить цель подушки')
         print(f'  5. Назад')
         choice = input('Выберите: ').strip()
+        if not choice:
+            continue
         if choice == '1':
             _add_to_investments(data)
         elif choice == '2':

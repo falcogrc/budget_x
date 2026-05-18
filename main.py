@@ -13,9 +13,12 @@ def _balance(data, month):
                if t['type'] == 'income' and t['date'].startswith(month)]
     expenses = [t for t in data['transactions']
                 if t['type'] == 'expense' and t['date'].startswith(month)]
+    savings = [t for t in data['transactions']
+               if t['type'] == 'saving' and t['date'].startswith(month)]
     total_income = sum(t['amount'] for t in incomes)
     total_expense = sum(t['amount'] for t in expenses)
-    return total_income - total_expense, total_income, total_expense
+    total_savings = sum(t['amount'] for t in savings)
+    return total_income - total_expense - total_savings, total_income, total_expense
 
 
 def _investment_line(data):
@@ -31,7 +34,7 @@ def _pillow_line(data):
     p = data['safety_pillow']
     if p['goal'] > 0:
         pct = (p['current'] / p['goal']) * 100
-        bar = '█' * int(pct / 5) + '░' * (20 - int(pct / 5))
+        bar = '█' * min(int(pct / 5), 20) + '░' * (20 - min(int(pct / 5), 20))
         return f'🛡️ Подушка: {p["current"]:,.2f} / {p["goal"]:,.2f} ₽ {bar} {pct:.0f}%'
     return f'🛡️ Подушка: {p["current"]:,.2f} ₽'
 
@@ -56,15 +59,17 @@ def show_menu():
     print()
     print('=' * 42)
     menu_items = [
-        ('1', '➕ Доход', '2', '➖ Расход'),
-        ('3', '📋 Список', '4', '💼 Инвестиции + Подушка'),
-        ('5', '📊 Статистика', '6', '🏷️ Категории'),
-        ('7', '💾 Выгрузить', '8', '🚪 Выход'),
+        ('1', '➕ Доход'),
+        ('2', '➖ Расход'),
+        ('3', '📋 Список'),
+        ('4', '💼 Сбережения'),
+        ('5', '📊 Статистика'),
+        ('6', '🏷️ Категории'),
+        ('7', '💾 Выгрузить'),
+        ('8', '🚪 Выход'),
     ]
-    for left_key, left_label, right_key, right_label in menu_items:
-        left = f'[{left_key}] {left_label}' if left_key else ''
-        right = f'    [{right_key}] {right_label}' if right_key else ''
-        print(f'{left:<25}{right}')
+    for key, label in menu_items:
+        print(f'  [{key}] {label}')
     print('=' * 42)
     print(f'{BOLD}Ваш выбор:{RESET} ', end='', flush=True)
 

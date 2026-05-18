@@ -16,6 +16,8 @@ def manage_categories():
         print(f'  2. Расходы ({len(data["categories"]["expense"])})')
         print(f'  3. Назад')
         choice = input('Выберите: ').strip()
+        if not choice:
+            continue
         if choice == '1':
             _edit_category_group(data, 'income')
         elif choice == '2':
