@@ -1,7 +1,7 @@
 from collections import defaultdict
 from config import GREEN, RED, YELLOW, CYAN, BOLD, RESET, clear_screen, current_month, today, bar_width, name_width
 from storage import load, save
-from transactions import _next_id
+from transactions import _next_id, _get_date
 
 
 def _bar(value, max_val, width=30):
@@ -18,13 +18,13 @@ def _ensure_category(data, ttype, name):
         save(data)
 
 
-def _make_txn(data, ttype, category, amount):
+def _make_txn(data, ttype, category, amount, date=None):
     txn = {
         'id': _next_id(data),
         'type': ttype,
         'category': category,
         'amount': amount,
-        'date': today(),
+        'date': date or today(),
         'comment': '',
     }
     data['transactions'].append(txn)
@@ -270,9 +270,10 @@ def _add_to_investments(data):
         if amount <= 0:
             print(f'{RED}Сумма должна быть положительной{RESET}')
             return
+        date = _get_date()
         data['investments']['total_invested'] += amount
         data['investments']['current_value'] += amount
-        _make_txn(data, 'saving', 'Инвестиции', amount)
+        _make_txn(data, 'saving', 'Инвестиции', amount, date)
         print(f'{GREEN}Добавлено {amount:.2f} ₽ в инвестиции{RESET}')
     except ValueError:
         print(f'{RED}Неверное число{RESET}')
@@ -297,8 +298,9 @@ def _add_to_pillow(data):
         if amount <= 0:
             print(f'{RED}Сумма должна быть положительной{RESET}')
             return
+        date = _get_date()
         data['safety_pillow']['current'] += amount
-        _make_txn(data, 'saving', 'Подушка', amount)
+        _make_txn(data, 'saving', 'Подушка', amount, date)
         print(f'{GREEN}Добавлено {amount:.2f} ₽ в подушку{RESET}')
     except ValueError:
         print(f'{RED}Неверное число{RESET}')
