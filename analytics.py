@@ -318,6 +318,7 @@ def _withdraw_from_investments(data):
             return
         inv['total_invested'] = max(0, inv['total_invested'] - amount)
         inv['current_value'] -= amount
+        _make_txn(data, 'income', 'Вывод инвестиций', amount)
         save(data)
         print(f'{GREEN}Выведено {amount:.2f} ₽ из инвестиций{RESET}')
     except ValueError:
@@ -335,6 +336,7 @@ def _withdraw_from_pillow(data):
             print(f'{RED}В подушке только {cur:,.2f} ₽{RESET}')
             return
         data['safety_pillow']['current'] -= amount
+        _make_txn(data, 'income', 'Вывод подушки', amount)
         save(data)
         print(f'{GREEN}Выведено {amount:.2f} ₽ из подушки{RESET}')
     except ValueError:
