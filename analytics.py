@@ -270,7 +270,6 @@ def _add_to_investments(data):
         if amount <= 0:
             print(f'{RED}Сумма должна быть положительной{RESET}')
             return
-        _ensure_category(data, 'expense', 'Инвестиции')
         data['investments']['total_invested'] += amount
         data['investments']['current_value'] += amount
         _make_txn(data, 'saving', 'Инвестиции', amount)
@@ -298,7 +297,6 @@ def _add_to_pillow(data):
         if amount <= 0:
             print(f'{RED}Сумма должна быть положительной{RESET}')
             return
-        _ensure_category(data, 'expense', 'Подушка')
         data['safety_pillow']['current'] += amount
         _make_txn(data, 'saving', 'Подушка', amount)
         print(f'{GREEN}Добавлено {amount:.2f} ₽ в подушку{RESET}')

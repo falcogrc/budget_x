@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import sys
-from config import clear_screen, GREEN, RED, YELLOW, BOLD, RESET, current_month, bar_width
+from config import clear_screen, GREEN, RED, YELLOW, CYAN, BOLD, RESET, current_month, bar_width
 from storage import load, save
 from transactions import add_income, add_expense, list_transactions
 from categories import manage_categories
@@ -47,6 +47,10 @@ def show_menu():
     month = current_month()
     bal, inc, exp = _balance(data, month)
 
+    savings = [t for t in data['transactions']
+               if t['type'] == 'saving' and t['date'].startswith(month)]
+    total_savings = sum(t['amount'] for t in savings)
+
     clear_screen()
     print('=' * 42)
     print(f'  {BOLD}  BX  •  Budget X{RESET}')
@@ -56,6 +60,8 @@ def show_menu():
     print(f'💰 Баланс: {GREEN if bal >= 0 else RED}{bal:,.2f} ₽{RESET}')
     print(f'📈 Доходы:  {GREEN}{inc:,.2f} ₽{RESET}')
     print(f'📉 Расходы: {RED}{exp:,.2f} ₽{RESET}')
+    if total_savings > 0:
+        print(f'🏦 Отложено: {CYAN}{total_savings:,.2f} ₽{RESET}')
     print()
     print(_investment_line(data))
     print(_pillow_line(data))
