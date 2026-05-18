@@ -235,9 +235,11 @@ def show_investments():
         print(f'{BOLD}Действия:{RESET}')
         print(f'  1. Пополнить инвестиции')
         print(f'  2. Обновить текущую стоимость')
-        print(f'  3. Пополнить подушку')
-        print(f'  4. Установить цель подушки')
-        print(f'  5. Назад')
+        print(f'  3. Вывести из инвестиций')
+        print(f'  4. Пополнить подушку')
+        print(f'  5. Вывести из подушки')
+        print(f'  6. Установить цель подушки')
+        print(f'  7. Назад')
         choice = input('Выберите: ').strip()
         if not choice:
             continue
@@ -246,10 +248,14 @@ def show_investments():
         elif choice == '2':
             _update_investment_value(data)
         elif choice == '3':
-            _add_to_pillow(data)
+            _withdraw_from_investments(data)
         elif choice == '4':
-            _set_pillow_goal(data)
+            _add_to_pillow(data)
         elif choice == '5':
+            _withdraw_from_pillow(data)
+        elif choice == '6':
+            _set_pillow_goal(data)
+        elif choice == '7':
             break
         else:
             print('Неверный выбор')
@@ -293,6 +299,41 @@ def _add_to_pillow(data):
         data['safety_pillow']['current'] += amount
         _make_txn(data, 'saving', 'Подушка', amount)
         print(f'{GREEN}Добавлено {amount:.2f} ₽ в подушку{RESET}')
+    except ValueError:
+        print(f'{RED}Неверное число{RESET}')
+
+
+def _withdraw_from_investments(data):
+    try:
+        amount = float(input('Сколько вывести: '))
+        if amount <= 0:
+            print(f'{RED}Сумма должна быть положительной{RESET}')
+            return
+        inv = data['investments']
+        if amount > inv['current_value']:
+            print(f'{RED}Нельзя вывести больше, чем текущая стоимость ({inv["current_value"]:,.2f} ₽){RESET}')
+            return
+        inv['total_invested'] = max(0, inv['total_invested'] - amount)
+        inv['current_value'] -= amount
+        save(data)
+        print(f'{GREEN}Выведено {amount:.2f} ₽ из инвестиций{RESET}')
+    except ValueError:
+        print(f'{RED}Неверное число{RESET}')
+
+
+def _withdraw_from_pillow(data):
+    try:
+        amount = float(input('Сколько вывести из подушки: '))
+        if amount <= 0:
+            print(f'{RED}Сумма должна быть положительной{RESET}')
+            return
+        cur = data['safety_pillow']['current']
+        if amount > cur:
+            print(f'{RED}В подушке только {cur:,.2f} ₽{RESET}')
+            return
+        data['safety_pillow']['current'] -= amount
+        save(data)
+        print(f'{GREEN}Выведено {amount:.2f} ₽ из подушки{RESET}')
     except ValueError:
         print(f'{RED}Неверное число{RESET}')
 
