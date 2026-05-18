@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import sys
-from config import clear_screen, GREEN, RED, YELLOW, BOLD, RESET, current_month
+from config import clear_screen, GREEN, RED, YELLOW, BOLD, RESET, current_month, bar_width
 from storage import load
 from transactions import add_income, add_expense, list_transactions
 from categories import manage_categories
@@ -34,7 +34,9 @@ def _pillow_line(data):
     p = data['safety_pillow']
     if p['goal'] > 0:
         pct = (p['current'] / p['goal']) * 100
-        bar = '█' * min(int(pct / 5), 20) + '░' * (20 - min(int(pct / 5), 20))
+        bw = bar_width()
+        filled = min(int(pct / 5), bw // 2)
+        bar = '█' * filled + '░' * (bw // 2 - filled)
         return f'🛡️ Подушка: {p["current"]:,.2f} / {p["goal"]:,.2f} ₽ {bar} {pct:.0f}%'
     return f'🛡️ Подушка: {p["current"]:,.2f} ₽'
 

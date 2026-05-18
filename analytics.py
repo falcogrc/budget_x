@@ -1,5 +1,5 @@
 from collections import defaultdict
-from config import GREEN, RED, YELLOW, CYAN, BOLD, RESET, clear_screen, current_month, today
+from config import GREEN, RED, YELLOW, CYAN, BOLD, RESET, clear_screen, current_month, today, bar_width, name_width
 from storage import load, save
 from transactions import _next_id
 
@@ -97,9 +97,9 @@ def show_statistics():
 
     if pillow['goal'] > 0:
         pct = (pillow['current'] / pillow['goal']) * 100
-        width = 20
-        filled = min(int((pillow['current'] / pillow['goal']) * width), width)
-        bar = '█' * filled + '░' * (width - filled)
+        bw = bar_width()
+        filled = min(int((pillow['current'] / pillow['goal']) * bw), bw)
+        bar = '█' * filled + '░' * (bw - filled)
         print(f'🛡️ Подушка: {pillow["current"]:,.2f} / {pillow["goal"]:,.2f} ₽ {bar} {pct:.0f}%')
     else:
         print(f'🛡️ Подушка: {pillow["current"]:,.2f} ₽')
@@ -121,21 +121,23 @@ def _category_chart(txns, title, color, budgets=None, months=1):
     for t in txns:
         cat_totals[t['category']] += t['amount']
     total = sum(cat_totals.values())
+    bw = bar_width()
+    nw = name_width()
     for cat, amount in sorted(cat_totals.items(), key=lambda x: -x[1]):
         suffix = ''
         if budgets and cat in budgets and budgets[cat] > 0:
             limit = budgets[cat]
             fact_avg = amount / months
-            bar = _bar(fact_avg, limit, width=30)
+            bar = _bar(fact_avg, limit, width=bw)
             pct = (fact_avg / limit) * 100
             flag = ' ✅' if pct <= 100 else ''
             bar_color = GREEN if pct <= 100 else RED
             suffix = f' {bar_color}{pct:.0f}%{flag} ({limit:,.0f}){RESET}'
         else:
-            bar = _bar(amount, total)
+            bar = _bar(amount, total, width=bw)
             pct = (amount / total) * 100
             suffix = f' {pct:.0f}%'
-        print(f'  {cat:<20} {color}{amount:>12,.2f}{RESET} {bar}{suffix}')
+        print(f'  {cat:<{nw}} {color}{amount:>12,.2f}{RESET} {bar}{suffix}')
     print()
 
 
@@ -161,16 +163,17 @@ def _show_monthly_chart(txns):
     print(f'{BOLD}Динамика по месяцам:{RESET}')
     max_val = max(max(months_income.values(), default=0),
                   max(months_expense.values(), default=0))
+    bw = bar_width()
 
     for m in all_months:
         inc = months_income.get(m, 0)
         exp = months_expense.get(m, 0)
         sav = months_savings.get(m, 0)
         print(f'  {m}')
-        print(f'    {GREEN}█{RESET} {"доход":<7} {inc:>12,.2f} {_bar(inc, max_val)}')
-        print(f'    {RED}█{RESET} {"расход":<7} {exp:>12,.2f} {_bar(exp, max_val)}')
+        print(f'    {GREEN}█{RESET} {"доход":<7} {inc:>12,.2f} {_bar(inc, max_val, bw)}')
+        print(f'    {RED}█{RESET} {"расход":<7} {exp:>12,.2f} {_bar(exp, max_val, bw)}')
         if sav > 0:
-            print(f'    {CYAN}█{RESET} {"сбереж":<7} {sav:>12,.2f} {_bar(sav, max_val)}')
+            print(f'    {CYAN}█{RESET} {"сбереж":<7} {sav:>12,.2f} {_bar(sav, max_val, bw)}')
     print()
 
 
@@ -190,10 +193,11 @@ def _show_balance_trend(txns):
 
     cumulative = 0.0
     max_abs = max(abs(v) for v in monthly.values())
+    bw = bar_width()
     for m in sorted(monthly):
         cumulative += monthly[m]
         color = GREEN if cumulative >= 0 else RED
-        bar = _bar(abs(cumulative), max_abs)
+        bar = _bar(abs(cumulative), max_abs, bw)
         print(f'  {m} {color}{cumulative:>12,.2f}{RESET} {bar}')
     print()
 
@@ -221,9 +225,9 @@ def show_investments():
     print(f'  Цель:      {pillow["goal"]:>12,.2f} ₽')
     if pillow['goal'] > 0:
         pct = (pillow['current'] / pillow['goal']) * 100
-        width = 30
-        filled = min(int((pillow['current'] / pillow['goal']) * width), width)
-        bar = '█' * filled + '░' * (width - filled)
+        bw = bar_width()
+        filled = min(int((pillow['current'] / pillow['goal']) * bw), bw)
+        bar = '█' * filled + '░' * (bw - filled)
         print(f'  Прогресс:  {bar} {pct:.0f}%')
 
     print()

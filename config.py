@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 
 # Цвета
 GREEN = '\033[92m'
@@ -25,3 +26,31 @@ def today():
 
 def current_month():
     return datetime.now().strftime('%Y-%m')
+
+def _cols():
+    try:
+        return os.get_terminal_size().columns
+    except (OSError, ValueError):
+        return 80
+
+def bar_width():
+    c = _cols()
+    if c >= 100:
+        return 30
+    elif c >= 80:
+        return 22
+    elif c >= 60:
+        return 16
+    else:
+        return 12
+
+def name_width():
+    c = _cols()
+    if c >= 100:
+        return 20
+    elif c >= 80:
+        return 18
+    elif c >= 60:
+        return 14
+    else:
+        return 12
